@@ -23,7 +23,9 @@ export async function checkTcpPort(host: string, port: number, timeout = 3000): 
   });
 }
 
-export async function checkNetwork(host = config.cisServer): Promise<NetworkResult> {
+export async function checkNetwork(hostArg?: string): Promise<NetworkResult> {
+  const host = hostArg ?? config.cisServer;
+  if (!host) throw new Error('CIS_SERVER is not configured');
   let dnsOk = true;
   try { await dns.lookup(host); } catch { try { await dns.lookup('google.com'); dnsOk = true; } catch { dnsOk = false; } }
 
