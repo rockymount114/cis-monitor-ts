@@ -22,7 +22,7 @@ export async function runOnce() {
 }
 
 export function startScheduler() {
-  logger.info(`Starting scheduler with crons: ${config.cronTimes.join(', ')}`);
+  logger.info(`Starting scheduler with crons: ${config.cronTimes.join(', ')} (timezone: ${config.timeZone})`);
   for (const cronExpr of config.cronTimes) {
     if (!cron.validate(cronExpr)) {
       logger.error(`Invalid cron: ${cronExpr}`);
@@ -31,7 +31,7 @@ export function startScheduler() {
     cron.schedule(cronExpr, async () => {
       logger.info(`Cron triggered: ${cronExpr}`);
       await runOnce().catch(()=>{});
-    });
-    logger.info(`Scheduled: ${cronExpr}`);
+    }, { timezone: config.timeZone });
+    logger.info(`Scheduled: ${cronExpr} (${config.timeZone})`);
   }
 }

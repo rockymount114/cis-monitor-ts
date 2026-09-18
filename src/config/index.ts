@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 export const config = {
+  timeZone: process.env.TIME_ZONE || 'America/New_York',
   db: {
     server: process.env.DB_SERVER,
     database: process.env.DB_DATABASE,

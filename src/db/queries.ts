@@ -25,6 +25,9 @@ WITH base AS (
         C_USERID
     FROM advanced.SYS024
     WHERE C_STATIONID = 'DXSCHEDULE02'
+      -- NOTE: keep plain GETDATE() here. AT TIME ZONE needs SQL Server 2016+
+      -- and breaks this server. This query is read-only; nothing is changed
+      -- in the server or database. Eastern-time rendering happens in the app.
       AND T_START >= DATEADD(DAY, -2, GETDATE())
 ),
 Parsed AS (

@@ -4,19 +4,20 @@ import { JobDetail } from '../db/queries.js';
 import { analyzeJobs } from '../services/jobService.js';
 import { NetworkResult } from '../services/networkCheck.js';
 import { logger } from '../utils/logger.js';
+import { formatDate, formatDateTime, formatDbWallClock } from '../utils/time.js';
 
 function buildHtmlReport(jobs: JobDetail[], network?: NetworkResult): string {
   const stats = analyzeJobs(jobs);
   const rows = jobs.map(j => `
     <tr style="background:${j.Success==='False' ? '#fee' : '#fff'}">
-      <td>${j.I_RUNID}</td><td>${new Date(j.T_START).toLocaleString()}</td><td>${j.ProcessName}</td>
+      <td>${j.I_RUNID}</td><td>${formatDbWallClock(j.T_START)}</td><td>${j.ProcessName}</td>
       <td>${j.C_PROCESS}</td><td>${j.C_USERID}</td><td>${j.Success}</td>
       <td>${j['Total records']||''}</td><td>${j['Successfully processed']||''}</td><td>${j.Failed||''}</td>
       <td>${(j.ResultDetails||'').substring(0,200)}</td>
     </tr>`).join('');
 
   return `
-  <h2>CIS Daily Report - ${new Date().toLocaleString()}</h2>
+  <h2>CIS Daily Report - ${formatDateTime(new Date(), config.timeZone)}</h2>
   <h3>Summary</h3>
   <ul>
     <li>Total Jobs (last 2 days): ${stats.total}</li>
@@ -47,7 +48,7 @@ export async function sendReport(jobs: JobDetail[], network?: NetworkResult) {
   } as any);
 
   const stats = analyzeJobs(jobs);
-  const subject = `[CIS] Job Report ${new Date().toLocaleDateString()} - Total:${stats.total} Failed:${stats.failed.length} Records:${stats.totalRecords}`;
+  const subject = `[CIS] Job Report ${formatDate(new Date(), config.timeZone)} - Total:${stats.total} Failed:${stats.failed.length} Records:${stats.totalRecords}`;
 
   const html = buildHtmlReport(jobs, network);
 
@@ -64,7 +65,7 @@ export async function sendTeams(jobs: JobDetail[], network?: NetworkResult) {
   if (!config.notify.teamsWebhook) return;
   const stats = analyzeJobs(jobs);
   const axios = (await import('axios')).default;
-  const text = `CIS Report ${new Date().toLocaleString()} - Total:${stats.total} Failed:${stats.failed.length} Records:${stats.totalRecords}\n` +
+  const text = `CIS Report ${formatDateTime(new Date(), config.timeZone)} - Total:${stats.total} Failed:${stats.failed.length} Records:${stats.totalRecords}\n` +
                (stats.failed.length ? `Failed: ${stats.failed.map(f=>`${f.ProcessName}(${f.I_RUNID}) Failed=${f.Failed}`).join(', ')}` : 'All OK') +
                (network ? `\nNetwork ${network.host}: Ping ${network.avgMs}ms ${network.ports.map(p=>`${p.port}:${p.ok?'OK':'FAIL'}`).join(' ')}` : '');
   await axios.post(config.notify.teamsWebhook, { text });
