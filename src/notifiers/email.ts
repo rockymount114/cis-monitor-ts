@@ -91,7 +91,7 @@ function buildHtmlReport(jobs: JobDetail[], network?: NetworkResult): string {
   <h2>CIS Daily Report - ${formatDateTime(new Date(), config.timeZone)}</h2>
   <h3>Summary</h3>
   <ul>
-    <li>Total Jobs (last 2 days): ${stats.total}</li>
+    <li>Total Jobs (today): ${stats.total}</li>
     <li>Total Records: ${stats.totalRecords} | Failed Records:
       <b style="color:${stats.totalFailed > 0 ? COLORS.failBorder : COLORS.okText}">${stats.totalFailed}</b></li>
     <li>Failed Jobs:

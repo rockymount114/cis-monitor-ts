@@ -28,7 +28,7 @@ WITH base AS (
       -- NOTE: keep plain GETDATE() here. AT TIME ZONE needs SQL Server 2016+
       -- and breaks this server. This query is read-only; nothing is changed
       -- in the server or database. Eastern-time rendering happens in the app.
-      AND T_START >= DATEADD(DAY, -2, GETDATE())
+      AND T_START >= CAST(GETDATE() AS DATE)
 ),
 Parsed AS (
     SELECT
