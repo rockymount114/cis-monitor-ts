@@ -52,3 +52,50 @@ export function formatDate(
     day: 'numeric',
   }).format(d);
 }
+
+export interface CheckpointTimeTarget {
+  time: string;
+  expectedCount: number;
+  cron?: string;
+  label?: string;
+}
+
+export function getCurrentTimeHHMM(
+  value: Date | string | null | undefined = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+): string {
+  const d = toDate(value) || new Date();
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(d);
+}
+
+export function resolveCheckpointForTime<T extends CheckpointTimeTarget>(
+  checkpoints: T[],
+  value: Date | string | null | undefined = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+): T {
+  const currentTime = getCurrentTimeHHMM(value, timeZone);
+  const sorted = [...checkpoints].sort((a, b) => a.time.localeCompare(b.time));
+  let matched: T | null = null;
+  for (const cp of sorted) {
+    if (currentTime >= cp.time) {
+      matched = cp;
+    } else {
+      break;
+    }
+  }
+  return (
+    matched ||
+    ({
+      time: '00:00',
+      cron: '',
+      expectedCount: 0,
+      label: `Pre-schedule (prior to ${sorted[0]?.time || 'first check'})`,
+    } as T)
+  );
+}
+

@@ -3,16 +3,25 @@ import { fetchJobDetails } from '../services/jobService.js';
 import { checkNetwork } from '../services/networkCheck.js';
 import { sendReport, sendTeams } from '../notifiers/email.js';
 import { logger } from '../utils/logger.js';
-import { config } from '../config/index.js';
+import { config, CheckpointConfig } from '../config/index.js';
 
-export async function runOnce() {
+export async function runOnce(checkpoint?: CheckpointConfig | null) {
   logger.info('=== Running scheduled CIS check ===');
+  if (checkpoint) {
+    logger.info(`Checkpoint context: [${checkpoint.time}] expected ${checkpoint.expectedCount} jobs (${checkpoint.label || 'batch'})`);
+  } else {
+    logger.info('Running with dynamic checkpoint resolution based on current time');
+  }
+
   try {
     const [jobs, network] = await Promise.all([
       fetchJobDetails(),
       checkNetwork()
     ]);
-    await Promise.all([sendReport(jobs, network), sendTeams(jobs, network)]);
+    await Promise.all([
+      sendReport(jobs, network, checkpoint),
+      sendTeams(jobs, network, checkpoint)
+    ]);
     logger.info('Report sent');
     return { jobs, network };
   } catch (e: any) {
@@ -22,16 +31,17 @@ export async function runOnce() {
 }
 
 export function startScheduler() {
-  logger.info(`Starting scheduler with crons: ${config.cronTimes.join(', ')} (timezone: ${config.timeZone})`);
-  for (const cronExpr of config.cronTimes) {
-    if (!cron.validate(cronExpr)) {
-      logger.error(`Invalid cron: ${cronExpr}`);
+  logger.info(`Starting scheduler with ${config.checkpoints.length} checkpoints (timezone: ${config.timeZone}):`);
+  for (const cp of config.checkpoints) {
+    logger.info(`  - [${cp.time}] expected jobs: ${cp.expectedCount}, cron: "${cp.cron}" (${cp.label || 'batch'})`);
+    if (!cron.validate(cp.cron)) {
+      logger.error(`Invalid cron expression for checkpoint ${cp.time}: ${cp.cron}`);
       continue;
     }
-    cron.schedule(cronExpr, async () => {
-      logger.info(`Cron triggered: ${cronExpr}`);
-      await runOnce().catch(()=>{});
+    cron.schedule(cp.cron, async () => {
+      logger.info(`Cron triggered for checkpoint [${cp.time}] (expected: ${cp.expectedCount} jobs): ${cp.cron}`);
+      await runOnce(cp).catch(() => {});
     }, { timezone: config.timeZone });
-    logger.info(`Scheduled: ${cronExpr} (${config.timeZone})`);
+    logger.info(`Scheduled: ${cp.cron} -> ${cp.time} (expected ${cp.expectedCount} jobs) (${config.timeZone})`);
   }
 }
