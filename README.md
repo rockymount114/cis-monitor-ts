@@ -51,3 +51,22 @@ pm2 save
 ## Notification Sample
 Subject: [CIS] Job Report 2026-09-17 - Total:15 Failed:1 Records:1200
 Body includes summary, failed jobs (e.g. eBill 381914 SMTP failure), table of all runs like your sample.
+
+
+
+run as admin in ps
+
+```powershell
+$cred = Get-Credential "CRMMASTER\V4Sched2"
+
+$action   = New-ScheduledTaskAction -Execute "C:\dev\cis-monitor-ts\start-pm2.bat"
+$trigger  = New-ScheduledTaskTrigger -AtStartup
+$trigger.Delay = "PT1M"
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) `
+            -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) `
+            -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+
+Register-ScheduledTask -TaskName "cis-notifications" -Action $action -Trigger $trigger `
+  -Settings $settings -User $cred.UserName -Password $cred.GetNetworkCredential().Password `
+  -RunLevel Highest -Force
+```
