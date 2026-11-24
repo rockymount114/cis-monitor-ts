@@ -8,10 +8,11 @@ export interface CheckpointConfig {
 }
 
 export const DEFAULT_CHECKPOINTS: CheckpointConfig[] = [
-  { time: '06:00', cron: '0 6 * * *', expectedCount: 6, label: 'Morning batch (after 5:45 AM)' },
-  { time: '11:00', cron: '0 11 * * *', expectedCount: 7, label: 'Mid-morning batch (after 10:35 AM)' },
-  { time: '19:20', cron: '20 19 * * *', expectedCount: 8, label: 'Evening batch (after 7:00 PM)' },
-  { time: '22:00', cron: '0 22 * * *', expectedCount: 9, label: 'Night batch (after 9:35 PM)' },
+  { time: '00:30', cron: '30 0 * * *', expectedCount: 1, label: 'Sensus Export (after 12:01 AM)' },
+  { time: '06:00', cron: '0 6 * * *', expectedCount: 7, label: 'Morning batch (after 5:45 AM)' },
+  { time: '11:00', cron: '0 11 * * *', expectedCount: 8, label: 'Mid-morning batch (after 10:35 AM)' },
+  { time: '19:20', cron: '20 19 * * *', expectedCount: 9, label: 'Evening batch (after 7:00 PM)' },
+  { time: '22:00', cron: '0 22 * * *', expectedCount: 10, label: 'Night batch (after 9:35 PM)' },
 ];
 
 function parseCheckpoints(): CheckpointConfig[] {
@@ -37,19 +38,20 @@ function parseCheckpoints(): CheckpointConfig[] {
   const envExpectedCounts = process.env.EXPECTED_JOB_COUNTS;
   if (envExpectedCounts) {
     const counts = envExpectedCounts.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
-    const crons = (process.env.CRON_TIMES || '0 6 * * *,0 11 * * *,20 19 * * *,0 22 * * *')
+    const crons = (process.env.CRON_TIMES || DEFAULT_CHECKPOINTS.map(c => c.cron).join(','))
       .split(',').map(s => s.trim());
     return crons.map((cron, idx) => {
       const parts = cron.split(' ');
       const min = (parts[0] || '0').padStart(2, '0');
       const hr = (parts[1] || '0').padStart(2, '0');
       const time = `${hr}:${min}`;
-      const expectedCount = counts[idx] !== undefined ? counts[idx] : (DEFAULT_CHECKPOINTS[idx]?.expectedCount || 0);
+      const def = DEFAULT_CHECKPOINTS.find(d => d.time === time) ?? DEFAULT_CHECKPOINTS[idx];
+      const expectedCount = counts[idx] !== undefined ? counts[idx] : (def?.expectedCount || 0);
       return {
         time,
         cron,
         expectedCount,
-        label: DEFAULT_CHECKPOINTS[idx]?.label || `Checkpoint ${time}`,
+        label: def?.label || `Checkpoint ${time}`,
       };
     });
   }
@@ -57,11 +59,11 @@ function parseCheckpoints(): CheckpointConfig[] {
   if (process.env.CRON_TIMES) {
     const crons = process.env.CRON_TIMES.split(',').map(s => s.trim());
     return crons.map((cron, idx) => {
-      const def = DEFAULT_CHECKPOINTS[idx];
       const parts = cron.split(' ');
       const min = (parts[0] || '0').padStart(2, '0');
       const hr = (parts[1] || '0').padStart(2, '0');
       const time = `${hr}:${min}`;
+      const def = DEFAULT_CHECKPOINTS.find(d => d.time === time) ?? DEFAULT_CHECKPOINTS[idx];
       return {
         time,
         cron,

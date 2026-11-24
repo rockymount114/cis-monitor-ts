@@ -4,7 +4,7 @@ TypeScript version of your PS1 project. Queries `advanced.SYS024` on DXSCHEDULE0
 
 ## Features
 - Query job details with your provided SQL (parsed + pivoted)
-- Scheduled at 6am, 11am, 7:20pm, 10pm (cron configurable)
+- Scheduled at 12:30am, 6am, 11am, 7:20pm, 10pm (cron configurable)
 - Network check ported from PS1 (TCP 3389,443,80,81,1433)
 - Email + Teams webhook notifications
 - Sample data compatible with your sample
@@ -22,7 +22,7 @@ src/
   notifiers/
     email.ts           # HTML report builder + email/teams
   jobs/
-    scheduler.ts       # cron 6,11,19:20,22
+    scheduler.ts       # cron 0:30,6,11,19:20,22
   utils/logger.ts
   index.ts             # entry
 ```
