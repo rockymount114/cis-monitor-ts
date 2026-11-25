@@ -12,7 +12,7 @@ WITH base AS (
             WHEN M_NOTES LIKE '%IMPORTPAYMENTS-10%' THEN 'Import Pending Payments-10'
             WHEN M_NOTES LIKE '%IMPORTPAYMENTS-WEB%' THEN 'Import Pending Payments-WEB'
             WHEN M_NOTES LIKE '%EmailProcess%' THEN 'eBill Notification'
-            WHEN M_NOTES LIKE '%VFLEX Export%' THEN 'Sensus VFLEX Export'
+            WHEN M_NOTES LIKE '%VFLEX RM SM (SRMSM)%' THEN 'Sensus VFLEX Export'
             WHEN M_NOTES LIKE '%Paymentus Daily CIF Export%' THEN 'Export CIF File'
             ELSE '999'
         END AS ProcessName,
